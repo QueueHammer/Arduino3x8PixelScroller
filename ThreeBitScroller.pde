@@ -15,13 +15,13 @@ LPD6803 strip = LPD6803(25, dataPin, clockPin);
 unsigned long startingValue = 0;
 unsigned long lights = startingValue;
 unsigned long bitMask = 1;
-char textToScroll[] = "0123456789\0";
+char textToScroll[] = "This was a triumph - I'm making a note here: HUGE SUCCESS. The LED Scroller is not a lie.";
 
 int stringIndex = 0;
 int pixelCharIndex = 0;
-int maxPixelCharIndex = 3;
+int maxPixelCharIndex = sizeof(unsigned int) / pixPerColumn;
 
-unsigned int pixelChars[40];
+unsigned int pixelChars[45];
 
 void setup() {  
   Serial.begin(9600); 
@@ -75,7 +75,10 @@ void setup() {
   
   //Special Chars
   pixelChars[36] = 0x0; //space
-  pixelChars[37] = 0xA; //-
+  pixelChars[37] = 0x12; //-
+  pixelChars[38] = 0x1; //.
+  pixelChars[39] = 0x5; //:
+  pixelChars[39] = 0x4; //'
   
   
 }
@@ -93,7 +96,7 @@ void loop(){
   
   CharacterShifter();
   
-  delay(500);
+  delay(100);
 }
 
 unsigned int Color(byte r, byte g, byte b)
@@ -125,7 +128,7 @@ void CharacterShifter() {
   }
   else {    
     //print the 3 bits of the value indexed in the buffer
-    unsigned int pixelChar = CharToPixelChar(pixelChars[stringIndex]);
+    unsigned int pixelChar = CharToPixelChar(textToScroll[stringIndex]);
     lights = (((unsigned long)(pixelChar >> (3 * pixelCharIndex) & 0x7))
                  << (3 * 7))
                 | lights;
@@ -144,8 +147,23 @@ void CharacterShifter() {
   //if they are equal to zero set the index to maxPixelCharIndex
 }
 
-unsigned int CharToPixelChar(char character){
-  if(stringIndex > 37) stringIndex = 0;
-  return pixelChars[stringIndex];
+unsigned int CharToPixelChar(char c){
+  
+  byte index = 0;
+  
+  if('0' <= c && c <= '9') index = c - '0';
+  else if (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')){
+    if('a' <= c && c <= 'z') index = c - 'a';
+    else index = c - 'A';
+    index = index + 10;
+  }
+  else if ((byte)c == (byte)' ') index = (byte)36;
+  else if ((byte)c == (byte)'-') index = (byte)37;
+  else if ((byte)c == (byte)'.') index = (byte)38;
+  else if ((byte)c == (byte)':') index = (byte)39;
+  
+  return pixelChars[index];
+  //return pixelChars['a' < 'b'];
+  
 }
  
